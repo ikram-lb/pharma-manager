@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+
+# Django
+*.sqlite3
+media/
+
+# Env
+.env
+
+# Node
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
