@@ -1,3 +1,86 @@
-from django.shortcuts import render
+from django.db.models import F
+from drf_spectacular.utils import extend_schema, OpenApiExample
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
-# Create your views here.
+from .models import Medicament
+from .serializers import MedicamentSerializer
+
+
+@extend_schema(tags=["Medicaments"])
+class MedicamentViewSet(viewsets.ModelViewSet):
+    """
+    API de gestion des médicaments.
+
+    Fournit les opérations CRUD, la recherche, le filtrage
+    et un endpoint spécifique pour les alertes de stock bas.
+    """
+
+    serializer_class = MedicamentSerializer
+    filterset_fields = ["categorie", "ordonnance_requise"]
+    search_fields = ["nom", "dci", "forme", "dosage"]
+    ordering_fields = ["nom", "prix_vente", "stock_actuel", "date_expiration", "date_creation"]
+    ordering = ["nom"]
+
+    def get_queryset(self):
+        """
+        Retourne les médicaments actifs avec filtres métier optionnels.
+        """
+        queryset = Medicament.objects.filter(est_actif=True).select_related("categorie")
+
+        est_en_alerte = self.request.query_params.get("est_en_alerte")
+        if est_en_alerte is not None:
+            est_en_alerte = est_en_alerte.lower()
+            if est_en_alerte == "true":
+                queryset = queryset.filter(stock_actuel__lte=F("stock_minimum"))
+            elif est_en_alerte == "false":
+                queryset = queryset.filter(stock_actuel__gt=F("stock_minimum"))
+
+        return queryset
+
+    def perform_destroy(self, instance):
+        """
+        Effectue un soft delete en désactivant le médicament.
+        """
+        instance.est_actif = False
+        instance.save(update_fields=["est_actif"])
+
+    @extend_schema(
+        description="Retourne la liste des médicaments actifs dont le stock actuel est inférieur ou égal au stock minimum.",
+        responses={200: MedicamentSerializer(many=True)},
+        examples=[
+            OpenApiExample(
+                "Exemple de réponse",
+                value=[
+                    {
+                        "id": 1,
+                        "nom": "Amoxicilline",
+                        "dci": "Amoxicilline",
+                        "categorie": 1,
+                        "categorie_nom": "Antibiotique",
+                        "forme": "Comprimé",
+                        "dosage": "500mg",
+                        "prix_achat": "12.50",
+                        "prix_vente": "18.00",
+                        "stock_actuel": 5,
+                        "stock_minimum": 10,
+                        "date_expiration": "2027-05-31",
+                        "ordonnance_requise": True,
+                        "date_creation": "2026-03-12T10:00:00Z",
+                        "est_actif": True,
+                        "est_en_alerte": True,
+                    }
+                ],
+                response_only=True,
+            )
+        ],
+    )
+    @action(detail=False, methods=["get"], url_path="alertes")
+    def alertes(self, request):
+        """
+        Retourne les médicaments en alerte de stock.
+        """
+        queryset = self.get_queryset().filter(stock_actuel__lte=F("stock_minimum"))
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
