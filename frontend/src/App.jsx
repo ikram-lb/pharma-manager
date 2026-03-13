@@ -7,7 +7,7 @@ function App() {
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <h1>PharmaManager</h1>
+        <h1>Pharmacie</h1>
         <nav className="nav-links">
           <NavLink to="/">Dashboard</NavLink>
           <NavLink to="/medicaments">Médicaments</NavLink>
