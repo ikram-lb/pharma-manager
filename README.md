@@ -57,20 +57,8 @@ npm run dev
 ## Frontend disponible sur :
 
 http://localhost:5173
-Installation Frontend
-cd ../frontend
 
-npm install
 
-## Copier les variables d'environnement
-cp .env.example .env
-
-## Lancer le serveur de développement
-npm run dev
-
-Frontend disponible sur :
-
-http://localhost:5173
 Documentation API
 
 # Swagger UI disponible sur :
