@@ -1,20 +1,31 @@
 # Python
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
 *.pyd
+*.sqlite3
+
+# Virtual environments
 venv/
+.venv/
+
+# Environment variables
+.env
+.env.*
 
 # Django
-*.sqlite3
 media/
-
-# Env
-.env
+staticfiles/
 
 # Node
 node_modules/
+dist/
 
-# OS
+# Logs
+*.log
+
+# OS / Editor
 .DS_Store
 Thumbs.db
+.vscode/
+.idea/
